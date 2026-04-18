@@ -1,0 +1,77 @@
+services:
+  validate:
+    image: busybox:latest
+    command: sh -c "chmod +x /app/scripts/validate-config.sh && /app/scripts/validate-config.sh"
+    volumes:
+      - .:/app
+    profiles:
+      - validate
+
+  web:
+    image: misskey/misskey:latest
+    restart: always
+    links:
+      - db
+      - redis
+      - meilisearch
+    environment:
+      - MISSKEY_HOST=0.0.0.0
+      - NODE_ENV=production
+    ports:
+      - 3000:8080
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./files:/misskey/files
+      - ./default.yml:/misskey/.config/default.yml:ro
+      - ./docker.env:/misskey/.config/docker.env:ro
+    networks:
+      - internal_network
+  db:
+    image: postgres:15-alpine
+    restart: always
+    env_file:
+      - ./docker.env
+    volumes:
+      - ./db:/var/lib/postgresql/data
+    networks:
+      - internal_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iasskey"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  redis:
+    image: redis:7-alpine
+    restart: always
+    networks:
+      - internal_network
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    restart: always
+    environment:
+      MEILI_MASTER_KEY: 720b2893ed3122e2bd2a63a3225694dc
+    volumes:
+      - ./meili_data:/meili_data
+    networks:
+      - internal_network
+#cloudflared:
+#    image: cloudflare/cloudflared:latest
+#    restart: always
+#    env_file:
+#      - ./tunnel.env
+#    command: tunnel run
+#    networks:
+#      - internal_network
+
+networks:
+  internal_network:

@@ -1,0 +1,22 @@
+url: https://your.host
+port: 8080
+setupPassword: PLEASE_CHANGE_HERE_FOR_SECURITY_REASON
+host: 0.0.0.0
+
+db:
+  host: db
+  port: 5432
+  db: iasskey
+  user: iasskey
+  pass: PLEASE_CHANGE_HERE_FOR_SECURITY_REASON
+
+redis:
+  host: redis
+  port: 6379
+
+meilisearch:
+  host: meilisearch
+  port: 7700
+  apiKey: PLEASE_CHANGE_HERE_FOR_SECURITY_REASON
+
+id: 'aidx'
