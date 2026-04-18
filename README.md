@@ -2,6 +2,54 @@
 
 A complete Docker-based Misskey instance setup with automated configuration validation and security checks.
 
+## Requirements
+
+### Host System Requirements
+
+Before running the setup scripts, ensure your host system has the following packages installed:
+
+- **Docker**: Container runtime (required)
+- **Docker Compose**: Or `docker compose` plugin (required)
+- **OpenSSL**: For generating secure passwords and API keys (required for auto-setup)
+- **Bash**: Shell interpreter (required)
+- **Basic utilities**: `sed`, `grep`, `mkdir`, `chmod` (usually pre-installed)
+
+### Installation
+
+**Arch Linux:**
+```bash
+sudo pacman -S docker docker-compose openssl
+sudo systemctl enable --now docker
+```
+
+**Fedora/RHEL/CentOS (RPM-based):**
+```bash
+sudo dnf install docker docker-compose openssl
+sudo systemctl enable --now docker
+```
+
+**Ubuntu/Debian (Debian-based):**
+```bash
+sudo apt update
+sudo apt install docker.io docker-compose openssl
+sudo systemctl enable --now docker
+```
+
+**Gentoo:**
+```bash
+sudo emerge app-containers/docker app-containers/docker-compose dev-libs/openssl
+sudo rc-update add docker default
+sudo rc-service docker start
+```
+
+### Verify Installation
+
+```bash
+docker --version
+docker compose version
+openssl version
+```
+
 ## Quick Start
 
 ### Option 1: Auto Setup (Recommended)
