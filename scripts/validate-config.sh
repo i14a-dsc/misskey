@@ -24,6 +24,37 @@ success() {
     echo -e "${GREEN}OK: $1${NC}"
 }
 
+# Function to check required packages
+check_required_packages() {
+    MISSING_PACKAGES=()
+
+    # Check Docker
+    if ! command -v docker >/dev/null 2>&1; then
+        MISSING_PACKAGES+=("docker")
+    fi
+
+    # Check Docker Compose
+    if ! docker compose version >/dev/null 2>&1; then
+        MISSING_PACKAGES+=("docker-compose")
+    fi
+
+    # Check basic utilities
+    for cmd in sed grep mkdir chmod; do
+        if ! command -v $cmd >/dev/null 2>&1; then
+            MISSING_PACKAGES+=("$cmd")
+        fi
+    done
+
+    if [ ${#MISSING_PACKAGES[@]} -ne 0 ]; then
+        error_exit "Missing required packages: ${MISSING_PACKAGES[*]}. Please install them before running this script."
+    fi
+
+    success "All required packages are installed"
+}
+
+# Check required packages
+check_required_packages
+
 if [ ! -f "default.yml" ]; then
     error_exit "default.yml not found. Please copy template.default.yml to default.yml and configure it."
 fi

@@ -27,10 +27,165 @@ warning() {
     echo -e "${YELLOW}WARNING: $1${NC}"
 }
 
+# Function to detect Linux distribution
+detect_distribution() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        echo "$ID"
+    elif [ -f /etc/arch-release ]; then
+        echo "arch"
+    elif [ -f /etc/gentoo-release ]; then
+        echo "gentoo"
+    else
+        echo "unknown"
+    fi
+}
+
+# Function to check required packages
+check_required_packages() {
+    MISSING_PACKAGES=()
+
+    # Check Docker
+    if ! command -v docker >/dev/null 2>&1; then
+        MISSING_PACKAGES+=("docker")
+    fi
+
+    # Check Docker Compose
+    if ! docker compose version >/dev/null 2>&1; then
+        MISSING_PACKAGES+=("docker-compose")
+    fi
+
+    # Check OpenSSL
+    if ! command -v openssl >/dev/null 2>&1; then
+        MISSING_PACKAGES+=("openssl")
+    fi
+
+    # Check basic utilities
+    for cmd in sed grep mkdir chmod; do
+        if ! command -v $cmd >/dev/null 2>&1; then
+            MISSING_PACKAGES+=("$cmd")
+        fi
+    done
+
+    if [ ${#MISSING_PACKAGES[@]} -ne 0 ]; then
+        echo "${MISSING_PACKAGES[@]}"
+        return 1
+    fi
+
+    success "All required packages are installed"
+    return 0
+}
+
+# Function to install missing packages
+install_missing_packages() {
+    local missing=("$@")
+    local distro=$(detect_distribution)
+
+    case "$distro" in
+        arch|archlinux)
+            info "Detected Arch Linux. Installing missing packages: ${missing[*]}"
+            sudo pacman -S --noconfirm "${missing[@]}"
+            sudo systemctl enable --now docker 2>/dev/null
+            ;;
+        fedora|rhel|centos)
+            info "Detected RPM-based distribution. Installing missing packages: ${missing[*]}"
+            sudo dnf install -y "${missing[@]}"
+            sudo systemctl enable --now docker 2>/dev/null
+            ;;
+        ubuntu|debian|zorin)
+            info "Detected Debian-based distribution. Installing missing packages: ${missing[*]}"
+            # Map package names for Debian/Ubuntu
+            local debian_packages=()
+            for pkg in "${missing[@]}"; do
+                case "$pkg" in
+                    docker) debian_packages+=("docker.io") ;;
+                    docker-compose) debian_packages+=("docker-compose") ;;
+                    *) debian_packages+=("$pkg") ;;
+                esac
+            done
+            sudo apt update
+            sudo apt install -y "${debian_packages[@]}"
+            sudo systemctl enable --now docker 2>/dev/null
+            ;;
+        sles|opensuse|suse)
+            info "Detected SUSE-based distribution. Installing missing packages: ${missing[*]}"
+            # Map package names for SUSE
+            local suse_packages=()
+            for pkg in "${missing[@]}"; do
+                case "$pkg" in
+                    docker) suse_packages+=("docker") ;;
+                    docker-compose) suse_packages+=("docker-compose") ;;
+                    *) suse_packages+=("$pkg") ;;
+                esac
+            done
+            sudo zypper install -y "${suse_packages[@]}"
+            sudo systemctl enable --now docker 2>/dev/null
+            ;;
+        gentoo)
+            info "Detected Gentoo. Installing missing packages: ${missing[*]}"
+            local emerge_packages=()
+            for pkg in "${missing[@]}"; do
+                case "$pkg" in
+                    docker) emerge_packages+=("app-containers/docker") ;;
+                    docker-compose) emerge_packages+=("app-containers/docker-compose") ;;
+                    openssl) emerge_packages+=("dev-libs/openssl") ;;
+                    sed) emerge_packages+=("sys-apps/sed") ;;
+                    grep) emerge_packages+=("sys-apps/grep") ;;
+                    mkdir) emerge_packages+=("sys-apps/coreutils") ;;
+                    chmod) emerge_packages+=("sys-apps/coreutils") ;;
+                    *) emerge_packages+=("$pkg") ;;
+                esac
+            done
+            sudo emerge -n "${emerge_packages[@]}"
+            sudo rc-update add docker default 2>/dev/null
+            sudo rc-service docker start 2>/dev/null
+            ;;
+        *)
+            error_exit "Unknown distribution. Cannot auto-install packages. Please install manually: ${missing[*]}"
+            ;;
+    esac
+
+    if [ $? -eq 0 ]; then
+        success "Missing packages installed successfully"
+    else
+        error_exit "Failed to install packages. Please install manually: ${missing[*]}"
+    fi
+}
+
 # Function to generate random password
 generate_password() {
     openssl rand -base64 32 | tr -d "=+/" | cut -c1-25
 }
+
+# Check required packages
+echo "Checking required packages..."
+MISSING=$(check_required_packages)
+CHECK_STATUS=$?
+
+if [ $CHECK_STATUS -ne 0 ]; then
+    MISSING_ARRAY=($MISSING)
+    warning "Missing required packages: ${MISSING_ARRAY[*]}"
+    echo ""
+    local distro=$(detect_distribution)
+    if [ "$distro" != "unknown" ]; then
+        info "Detected distribution: $distro"
+        read -p "Do you want to automatically install missing packages? (y/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            install_missing_packages "${MISSING_ARRAY[@]}"
+            # Re-check after installation
+            MISSING=$(check_required_packages)
+            CHECK_STATUS=$?
+            if [ $CHECK_STATUS -ne 0 ]; then
+                error_exit "Some packages are still missing after installation. Please install them manually."
+            fi
+        else
+            error_exit "Please install the missing packages manually before running this script."
+        fi
+    else
+        error_exit "Unknown distribution. Cannot auto-install packages. Please install manually: ${MISSING_ARRAY[*]}"
+    fi
+fi
 
 # Function to generate random string for API keys
 generate_api_key() {
