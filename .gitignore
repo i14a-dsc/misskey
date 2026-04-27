@@ -1,12 +1,14 @@
+# not template files
+compose.yml
+default.yml
+docker.env
+tunnel.env
+anubis.env
+
 # Data directories
 meili_data/
 files/
 db/
-
-# Configuration files (secrets and local settings)
-docker.env
-tunnel.env
-default.yml
 
 # Logs
 *.log

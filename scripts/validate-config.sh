@@ -52,7 +52,6 @@ check_required_packages() {
     success "All required packages are installed"
 }
 
-# Check required packages
 check_required_packages
 
 if [ ! -f "default.yml" ]; then
@@ -92,6 +91,14 @@ if [ -f "tunnel.env" ]; then
         warning "Default tunnel token found in tunnel.env. Please set your actual Cloudflare tunnel token if you want to use tunneling."
     else
         success "Tunnel token is configured"
+    fi
+fi
+
+if [ -f "anubis.env" ]; then
+    if grep -q "TARGET=web:8080" anubis.env; then
+        success "Anubis configuration is valid"
+    else
+        warning "Anubis TARGET configuration may need adjustment. Default is 'web:8080'"
     fi
 fi
 

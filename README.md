@@ -17,26 +17,30 @@ Before running the setup scripts, ensure your host system has the following pack
 ### Installation
 
 **Arch Linux:**
-```bash
+
+```shell
 sudo pacman -S docker docker-compose openssl
 sudo systemctl enable --now docker
 ```
 
 **Fedora/RHEL/CentOS (RPM-based):**
-```bash
+
+```shell
 sudo dnf install docker docker-compose openssl
 sudo systemctl enable --now docker
 ```
 
 **Ubuntu/Debian (Debian-based):**
-```bash
+
+```shell
 sudo apt update
 sudo apt install docker.io docker-compose openssl
 sudo systemctl enable --now docker
 ```
 
 **Gentoo:**
-```bash
+
+```shell
 sudo emerge app-containers/docker app-containers/docker-compose dev-libs/openssl
 sudo rc-update add docker default
 sudo rc-service docker start
@@ -44,7 +48,7 @@ sudo rc-service docker start
 
 ### Verify Installation
 
-```bash
+```shell
 docker --version
 docker compose version
 openssl version
@@ -55,11 +59,13 @@ openssl version
 ### Option 1: Auto Setup (Recommended)
 
 After `git clone`, run the auto-setup script:
-```bash
+
+```shell
 ./scripts/auto-setup.sh
 ```
 
 This will automatically:
+
 - Generate secure passwords and API keys
 - Configure all settings based on your input
 - Validate configuration
@@ -68,17 +74,20 @@ This will automatically:
 ### Option 2: Manual Setup
 
 1. **Copy Templates**:
-   ```bash
+
+   ```shell
    cp template.default.yml default.yml
    cp template.docker.env docker.env
-   cp template.tunnel.env tunnel.env  # Optional
+   cp template.tunnel.env tunnel.env  # Optional (Cloudflare Tunnel)
+   cp template.anubis.env anubis.env  # Optional (Bot Protection)
    ```
 
 2. **Configure Settings**:
    Edit `default.yml` and `docker.env` to set your domain and secure passwords
 
 3. **Start with Validation**:
-   ```bash
+
+   ```shell
    ./scripts/start-misskey.sh
    ```
 
@@ -89,7 +98,7 @@ This will automatically:
 
 If you prefer to start manually:
 
-```bash
+```shell
 # Validate configuration first
 docker compose --profile validate up validate
 
@@ -100,25 +109,39 @@ docker compose up -d
 ## Configuration Files
 
 ### `default.yml`
+
 Main Misskey configuration. Key settings:
+
 - `url`: Your domain (required)
 - `setupPassword`: Admin setup password (required)
 - Database and service connections
 
 ### `docker.env`
+
 Environment variables for Docker services:
+
 - PostgreSQL credentials
 - Misskey configuration
 - Meilisearch API key
 
 ### `tunnel.env` (Optional)
+
 Cloudflare tunnel token for external access:
+
 - Get token from Cloudflare Zero Trust dashboard
 - Uncomment tunnel service in `compose.yml`
 
+### `anubis.env` (Optional)
+
+Anubis bot protection configuration:
+
+- Protects against bots and scrapers
+- Uncomment anubis service in `compose.yml`
+- Comment out `ports` in `web` service (Anubis handles external access)
+
 ## Directory Structure
 
-```
+```shell
 iasskey/
 |-- scripts/
 |   |-- auto-setup.sh         # Fully automated setup
@@ -128,6 +151,7 @@ iasskey/
 |-- default.yml               # Misskey configuration
 |-- docker.env                # Environment variables
 |-- tunnel.env                # Tunnel configuration (optional)
+|-- anubis.env                # Anubis bot protection (optional)
 |-- template.*.yml/.env      # Configuration templates
 |-- files/                    # User uploaded files
 |-- db/                       # PostgreSQL data
@@ -137,6 +161,7 @@ iasskey/
 ## Security Validation
 
 The setup includes automated security checks that prevent startup if:
+
 - Default URL `https://your.host` is used
 - Default password `PLEASE_CHANGE_HERE_FOR_SECURITY_REASON` is used
 - Required configuration files are missing
@@ -149,24 +174,31 @@ The setup includes automated security checks that prevent startup if:
 - **redis**: Redis cache
 - **meilisearch**: Search engine
 - **validate**: Configuration validation (optional)
+- **anubis**: Bot protection proxy (optional)
 
 ## Troubleshooting
 
 ### Port Conflicts
+
 If port 3000 is in use, change it in `compose.yml`:
-```yaml
+
+```shell
 ports:
-  - 3001:8080  # Change 3000 to your preferred port
+  - 3001:8080 # Change 3000 to your preferred port
 ```
 
 ### File Permissions
+
 The setup automatically configures permissions, but if issues occur:
-```bash
+
+```shell
 chmod 777 files
 ```
 
 ### Validation Errors
+
 If validation fails, check:
+
 - `default.yml` has your actual domain
 - `docker.env` has secure passwords
 - All required files exist
@@ -174,17 +206,20 @@ If validation fails, check:
 ## Development
 
 To run validation only:
-```bash
+
+```shell
 docker compose --profile validate up validate
 ```
 
 To view logs:
-```bash
+
+```shell
 docker compose logs -f web
 ```
 
 To restart services:
-```bash
+
+```shell
 docker compose restart web
 ```
 
