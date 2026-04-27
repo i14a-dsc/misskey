@@ -7,8 +7,6 @@ YELLOW='\033[1;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-ERRORS=0
-
 error_exit() {
     echo -e "${RED}ERROR: $1${NC}"
     echo -e "${RED}Please fix this issue before starting Misskey.${NC}"
@@ -24,29 +22,25 @@ success() {
     echo -e "${GREEN}OK: $1${NC}"
 }
 
-# Function to check required packages
 check_required_packages() {
-    MISSING_PACKAGES=()
+    local missing=()
 
-    # Check Docker
     if ! command -v docker >/dev/null 2>&1; then
-        MISSING_PACKAGES+=("docker")
+        missing+=("docker")
     fi
 
-    # Check Docker Compose
     if ! docker compose version >/dev/null 2>&1; then
-        MISSING_PACKAGES+=("docker-compose")
+        missing+=("docker-compose")
     fi
 
-    # Check basic utilities
     for cmd in sed grep mkdir chmod; do
-        if ! command -v $cmd >/dev/null 2>&1; then
-            MISSING_PACKAGES+=("$cmd")
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            missing+=("$cmd")
         fi
     done
 
-    if [ ${#MISSING_PACKAGES[@]} -ne 0 ]; then
-        error_exit "Missing required packages: ${MISSING_PACKAGES[*]}. Please install them before running this script."
+    if [ ${#missing[@]} -ne 0 ]; then
+        error_exit "Missing required packages: ${missing[*]}. Please install them before running this script."
     fi
 
     success "All required packages are installed"
@@ -78,11 +72,6 @@ if grep -q "PLEASE_CHANGE_HERE_FOR_SECURITY_REASON" docker.env; then
     error_exit "Default PostgreSQL password found in docker.env. Please set a secure password."
 else
     success "PostgreSQL password is configured"
-fi
-
-if grep -q "PLEASE_CHANGE_HERE_FOR_SECURITY_REASON" docker.env; then
-    warning "Default Meilisearch key found. Consider setting a secure key for production."
-else
     success "Meilisearch key is configured"
 fi
 
@@ -95,50 +84,36 @@ if [ -f "tunnel.env" ]; then
 fi
 
 if [ -f "anubis.env" ]; then
-    if grep -q "TARGET=web:8080" anubis.env; then
+    if grep -q "TARGET=http://web:8080" anubis.env; then
         success "Anubis configuration is valid"
     else
-        warning "Anubis TARGET configuration may need adjustment. Default is 'web:8080'"
+        warning "Anubis TARGET configuration may need adjustment. Default is 'http://web:8080'"
     fi
 fi
 
-# Configuration consistency validation
 echo ""
 echo "=== Configuration Consistency Validation ==="
 
-# Extract values from default.yml
-if [ -f "default.yml" ]; then
-    DEFAULT_URL=$(grep "^url:" default.yml | sed 's/url: //' | sed 's/^[[:space:]]*//')
-    DEFAULT_PORT=$(grep "^port:" default.yml | sed 's/port: //' | sed 's/^[[:space:]]*//')
-    DEFAULT_HOST=$(grep "^host:" default.yml | sed 's/host: //' | sed 's/^[[:space:]]*//')
-else
-    error_exit "default.yml not found for consistency validation"
-fi
+DEFAULT_URL=$(grep "^url:" default.yml | sed 's/url: //' | sed 's/^[[:space:]]*//')
+DEFAULT_PORT=$(grep "^port:" default.yml | sed 's/port: //' | sed 's/^[[:space:]]*//')
+DEFAULT_HOST=$(grep "^host:" default.yml | sed 's/host: //' | sed 's/^[[:space:]]*//')
 
-# Extract values from docker.env
-if [ -f "docker.env" ]; then
-    DOCKER_URL=$(grep "^MISSKEY_URL=" docker.env | sed 's/MISSKEY_URL=//' | sed 's/^[[:space:]]*//')
-    DOCKER_PORT=$(grep "^MISSKEY_PORT=" docker.env | sed 's/MISSKEY_PORT=//' | sed 's/^[[:space:]]*//')
-    DOCKER_HOST=$(grep "^MISSKEY_HOST=" docker.env | sed 's/MISSKEY_HOST=//' | sed 's/^[[:space:]]*//')
-else
-    error_exit "docker.env not found for consistency validation"
-fi
+DOCKER_URL=$(grep "^MISSKEY_URL=" docker.env | sed 's/MISSKEY_URL=//' | sed 's/^[[:space:]]*//')
+DOCKER_PORT=$(grep "^MISSKEY_PORT=" docker.env | sed 's/MISSKEY_PORT=//' | sed 's/^[[:space:]]*//')
+DOCKER_HOST=$(grep "^MISSKEY_HOST=" docker.env | sed 's/MISSKEY_HOST=//' | sed 's/^[[:space:]]*//')
 
-# URL consistency check
 if [ "$DEFAULT_URL" = "$DOCKER_URL" ]; then
     success "URL is consistent between default.yml and docker.env: $DEFAULT_URL"
 else
     error_exit "URL mismatch: default.yml has '$DEFAULT_URL' but docker.env has '$DOCKER_URL'"
 fi
 
-# Port consistency check
 if [ "$DEFAULT_PORT" = "$DOCKER_PORT" ]; then
     success "Port is consistent between default.yml and docker.env: $DEFAULT_PORT"
 else
     error_exit "Port mismatch: default.yml has '$DEFAULT_PORT' but docker.env has '$DOCKER_PORT'"
 fi
 
-# Host consistency check
 if [ "$DEFAULT_HOST" = "$DOCKER_HOST" ]; then
     success "Host is consistent between default.yml and docker.env: $DEFAULT_HOST"
 else

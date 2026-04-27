@@ -1,0 +1,16 @@
+bots:
+  - name: api-path
+    path_regex: ^/api/.*$
+    action: ALLOW
+  - name: files-path
+    path_regex: ^/files/.*$
+    action: ALLOW
+  - name: apple-touch-icon
+    path_regex: ^/apple-touch-icon\.png$
+    action: ALLOW
+  - name: favicon
+    path_regex: ^/favicon\.ico$
+    action: ALLOW
+  - name: catch-all
+    path_regex: ^/.*$
+    action: CHALLENGE

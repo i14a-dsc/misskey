@@ -3,7 +3,6 @@
 echo "Starting Misskey with configuration validation..."
 
 RED='\033[0;31m'
-YELLOW='\033[1;33m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
@@ -16,35 +15,30 @@ success() {
     echo -e "${GREEN}OK: $1${NC}"
 }
 
-# Function to check required packages
 check_required_packages() {
-    MISSING_PACKAGES=()
+    local missing=()
 
-    # Check Docker
     if ! command -v docker >/dev/null 2>&1; then
-        MISSING_PACKAGES+=("docker")
+        missing+=("docker")
     fi
 
-    # Check Docker Compose
     if ! docker compose version >/dev/null 2>&1; then
-        MISSING_PACKAGES+=("docker-compose")
+        missing+=("docker-compose")
     fi
 
-    # Check basic utilities
     for cmd in sed grep mkdir chmod; do
-        if ! command -v $cmd >/dev/null 2>&1; then
-            MISSING_PACKAGES+=("$cmd")
+        if ! command -v "$cmd" >/dev/null 2>&1; then
+            missing+=("$cmd")
         fi
     done
 
-    if [ ${#MISSING_PACKAGES[@]} -ne 0 ]; then
-        error_exit "Missing required packages: ${MISSING_PACKAGES[*]}. Please install them before running this script."
+    if [ ${#missing[@]} -ne 0 ]; then
+        error_exit "Missing required packages: ${missing[*]}. Please install them before running this script."
     fi
 
     success "All required packages are installed"
 }
 
-# Check required packages
 check_required_packages
 
 echo "Step 1: Setting up file permissions..."
@@ -53,15 +47,12 @@ if [ -d "files" ]; then
 fi
 
 echo "Step 2: Validating configuration..."
-docker compose --profile validate up validate
-
-if [ $? -eq 0 ]; then
+if docker compose --profile validate up validate; then
     echo "Step 3: Configuration validation passed! Starting Misskey services..."
     docker compose up -d
     echo "Step 4: Misskey is starting up..."
     echo "You can check the status with: docker compose logs -f"
-    
-    # Extract URL from configuration
+
     if [ -f "default.yml" ]; then
         MISSKEY_URL=$(grep "^url:" default.yml | sed 's/url: //' | sed 's/^[[:space:]]*//')
         if [ -n "$MISSKEY_URL" ] && [ "$MISSKEY_URL" != "https://your.host" ]; then
