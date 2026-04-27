@@ -76,6 +76,11 @@ This will automatically:
 1. **Copy Templates**:
 
    ```shell
+   # Using the copy script (recommended)
+   ./scripts/copy.sh
+
+   # Or manually:
+   cp template.compose.yml compose.yml
    cp template.default.yml default.yml
    cp template.docker.env docker.env
    cp template.tunnel.env tunnel.env  # Optional (Cloudflare Tunnel)
@@ -129,6 +134,7 @@ Environment variables for Docker services:
 Cloudflare tunnel token for external access:
 
 - Get token from Cloudflare Zero Trust dashboard
+- Copy `template.compose.yml` to `compose.yml`
 - Uncomment tunnel service in `compose.yml`
 
 ### `anubis.env` (Optional)
@@ -136,6 +142,7 @@ Cloudflare tunnel token for external access:
 Anubis bot protection configuration:
 
 - Protects against bots and scrapers
+- Copy `template.compose.yml` to `compose.yml`
 - Uncomment anubis service in `compose.yml`
 - Comment out `ports` in `web` service (Anubis handles external access)
 
@@ -145,9 +152,11 @@ Anubis bot protection configuration:
 iasskey/
 |-- scripts/
 |   |-- auto-setup.sh         # Fully automated setup
+|   |-- copy.sh               # Copy template files to config files
 |   |-- validate-config.sh    # Configuration validation
 |   |-- start-misskey.sh      # Startup with validation
-|-- compose.yml               # Docker Compose configuration
+|-- template.compose.yml      # Docker Compose template
+|-- compose.yml               # Docker Compose configuration (generated)
 |-- default.yml               # Misskey configuration
 |-- docker.env                # Environment variables
 |-- tunnel.env                # Tunnel configuration (optional)
@@ -180,7 +189,7 @@ The setup includes automated security checks that prevent startup if:
 
 ### Port Conflicts
 
-If port 3000 is in use, change it in `compose.yml`:
+If port 3000 is in use, change it in `compose.yml` (after copying from template):
 
 ```shell
 ports:
