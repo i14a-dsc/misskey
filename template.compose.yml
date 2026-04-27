@@ -14,9 +14,8 @@ services:
       - db
       - redis
       - meilisearch
-    environment:
-      - MISSKEY_HOST=0.0.0.0
-      - NODE_ENV=production
+    env_file:
+      - ./docker.env
     ports:
       - 3000:8080
     depends_on:
@@ -58,8 +57,8 @@ services:
   meilisearch:
     image: getmeili/meilisearch:latest
     restart: always
-    environment:
-      MEILI_MASTER_KEY: PLEASE_CHANGE_HERE_FOR_SECURITY_REASON
+    env_file:
+      - ./docker.env
     volumes:
       - ./meili_data:/meili_data
     networks:

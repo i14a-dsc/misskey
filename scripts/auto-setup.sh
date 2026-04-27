@@ -192,10 +192,6 @@ sed -i "s|apiKey: $MISSKEY_PASSWORD|apiKey: $MEILI_KEY|g" default.yml
 sed -i "s|PLEASE_CHANGE_HERE_FOR_SECURITY_REASON|$POSTGRES_PASSWORD|g" docker.env
 sed -i "s|https://your.host|$MISSKEY_URL|g" docker.env
 sed -i "s|MEILI_MASTER_KEY=PLEASE_CHANGE_HERE_FOR_SECURITY_REASON|MEILI_MASTER_KEY=$MEILI_KEY|g" docker.env
-
-if grep -q "MEILI_MASTER_KEY: PLEASE_CHANGE_HERE_FOR_SECURITY_REASON" compose.yml; then
-	sed -i "s|MEILI_MASTER_KEY: PLEASE_CHANGE_HERE_FOR_SECURITY_REASON|MEILI_MASTER_KEY: $MEILI_KEY|g" compose.yml
-fi
 success "Configuration files updated."
 
 mkdir -p files db meili_data
