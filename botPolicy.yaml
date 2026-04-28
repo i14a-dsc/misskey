@@ -1,6 +1,14 @@
 bots:
+  - name: activitypub-federation
+    path_regex: ^/(.well-known/.*|users/.*|inbox|api/.*|notes/.*)$
+    header_regex:
+      Accept: .*(application\/activity\+json|application\/ld\+json).*
+    action: ALLOW
   - name: api-path
     path_regex: ^/api/.*$
+    action: ALLOW
+  - name: well-known
+    path_regex: ^/.well-known/.*$
     action: ALLOW
   - name: files-path
     path_regex: ^/files/.*$
