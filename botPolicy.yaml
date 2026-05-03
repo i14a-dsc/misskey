@@ -1,24 +1,57 @@
 bots:
-  - name: activitypub-federation
-    path_regex: ^/(.well-known/.*|users/.*|inbox|api/.*|notes/.*)$
+  - name: webfinger
+    path_regex: ^/.well-known/webfinger$
+    header_regex:
+      Accept: application/jrd\+json.*
+    action: ALLOW
+  - name: nodeinfo
+    path_regex: ^/.well-known/nodeinfo$
+    action: ALLOW
+  - name: nodeinfo-2
+    path_regex: ^/nodeinfo/2\.[01]$
+    action: ALLOW
+  - name: activitypub-actor
+    path_regex: ^/users/[^/]+$
     header_regex:
       Accept: .*(application\/activity\+json|application\/ld\+json).*
     action: ALLOW
-  - name: api-path
+  - name: activitypub-inbox
+    path_regex: ^/(inbox|users/[^/]+/inbox)$
+    header_regex:
+      Content-Type: application\/activity\+json.*
+    action: ALLOW
+  - name: activitypub-outbox
+    path_regex: ^/users/[^/]+/outbox$
+    header_regex:
+      Accept: .*(application\/activity\+json|application\/ld\+json).*
+    action: ALLOW
+  - name: activitypub-collections
+    path_regex: ^/users/[^/]+/(following|followers|collections/featured|statuses/[^/]+)$
+    header_regex:
+      Accept: .*(application\/activity\+json|application\/ld\+json).*
+    action: ALLOW
+  - name: vite
+    path_regex: ^/vite/.*$
+    header_regex:
+      Referer: .*/notes/.*$
+    action: ALLOW
+  - name: public-assets
+    path_regex: ^/(apple-touch-icon\.png|favicon\.ico|emoji/.*|static-assets/.*|assets/.*|client-assets/.*|identicon/[^/]+/[^/]+\.png)$
+    action: ALLOW
+  - name: api-public
     path_regex: ^/api/.*$
+    header_regex:
+      Accept: .*(application\/json|application\/activity\+json|application\/ld\+json).*
     action: ALLOW
-  - name: well-known
-    path_regex: ^/.well-known/.*$
-    action: ALLOW
-  - name: files-path
+  - name: notes-challenge
+    path_regex: ^/notes/.*$
+    action: CHALLENGE
+  - name: files-challenge
     path_regex: ^/files/.*$
-    action: ALLOW
-  - name: apple-touch-icon
-    path_regex: ^/apple-touch-icon\.png$
-    action: ALLOW
-  - name: favicon
-    path_regex: ^/favicon\.ico$
-    action: ALLOW
+    action: CHALLENGE
+  - name: api-challenge
+    path_regex: ^/api/.*$
+    action: CHALLENGE
   - name: catch-all
     path_regex: ^/.*$
     action: CHALLENGE
